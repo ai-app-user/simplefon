@@ -1,5 +1,101 @@
 <!doctype html>
 <html>
-  <head><meta charset="utf-8"><title>Simplefon</title></head>
-  <body><h1>It works !</h1><p>Firebase Hosting is live.</p></body>
+<head>
+  <meta charset="utf-8" />
+  <title>KV Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    input, button { padding: .6rem .8rem; margin: .25rem 0; }
+    .row { display: grid; grid-template-columns: 1fr 2fr auto; gap: .5rem; align-items: center; }
+    pre { background:#f6f8fa; padding:1rem; overflow:auto; }
+  </style>
+</head>
+<body>
+  <h1>Key/Value Admin</h1>
+
+  <div class="row">
+    <input id="key" placeholder="key (document id)" />
+    <input id="value" placeholder='value (JSON or string)' />
+    <button id="upsert">Create/Update</button>
+  </div>
+
+  <div class="row">
+    <input id="getKey" placeholder="key to read" />
+    <button id="get">Get</button>
+    <button id="del">Delete</button>
+  </div>
+
+  <p><button id="list">List first 50 keys</button></p>
+  <pre id="out"></pre>
+
+  <!-- Firebase JS SDK (modular) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, deleteDoc,
+      collection, query, orderBy, limit, getDocs
+    } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+  "projectId": "simplefon",
+  "appId": "1:737609214127:web:76dcc600e272954f918c5a",
+  "storageBucket": "simplefon.firebasestorage.app",
+  "apiKey": "AIzaSyCOJJnbYeoXhBXEGzatsp1Y8t-w5iVgYEw",
+  "authDomain": "simplefon.firebaseapp.com",
+  "messagingSenderId": "737609214127",
+  "measurementId": "G-GK26SJ0LQH"
+};
+
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const kv = (k) => doc(db, "kv", k);
+
+    const $ = (id) => document.getElementById(id);
+    const out = $("out");
+    const log = (x) => out.textContent = typeof x === "string" ? x : JSON.stringify(x, null, 2);
+
+    // Sign in anonymously then enable UI
+    signInAnonymously(auth).catch(e => log(e.message));
+    onAuthStateChanged(auth, (u) => {
+      if (!u) return;
+      $("upsert").onclick = async () => {
+        const key = $("key").value.trim();
+        let val = $("value").value;
+        if (!key) return log("Key required");
+        try {
+          try { val = JSON.parse(val); } catch { /* treat as string */ }
+          // Store value under field "v"; you can add other metadata fields later
+          await setDoc(kv(key), { v: val, updatedAt: new Date() }, { merge: true });
+          log({ ok: true, key, val });
+        } catch (e) { log(e.message); }
+      };
+
+      $("get").onclick = async () => {
+        const key = $("getKey").value.trim();
+        if (!key) return log("Key required");
+        const snap = await getDoc(kv(key));
+        log(snap.exists() ? { key, value: snap.data().v } : "Not found");
+      };
+
+      $("del").onclick = async () => {
+        const key = $("getKey").value.trim();
+        if (!key) return log("Key required");
+        await deleteDoc(kv(key));
+        log({ deleted: key });
+      };
+
+      $("list").onclick = async () => {
+        const q = query(collection(db, "kv"), orderBy("__name__"), limit(50));
+        const snaps = await getDocs(q);
+        const items = [];
+        snaps.forEach(d => items.push({ key: d.id, value: d.data().v }));
+        log(items);
+      };
+    });
+  </script>
+</body>
 </html>
