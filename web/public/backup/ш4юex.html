@@ -36,7 +36,7 @@
   <!-- Top bar -->
   <header class="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 bg-slate-900/80 border-b border-white/10">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2" aria-label="simplefon.ai home">
+      <a href="#" class="flex items-center gap-2" aria-label="simplefon.ai home">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <rect x="2" y="2" width="20" height="20" rx="5" class="fill-cyan-400/20" />
           <path d="M7 9c0-1.1.9-2 2-2h2a2 2 0 012 2v1a2 2 0 01-2 2H9v2h4" class="stroke-cyan-300" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -51,8 +51,7 @@
       </nav>
       <div class="flex items-center gap-3">
         <a href="#" aria-label="Log in (TBD)" class="text-sm px-3 py-2 rounded-xl hover:text-cyan-300">Log in</a>
-        <!-- UPDATED: Sign up CTA goes to signup.html -->
-        <a href="signup.html" aria-label="Sign up" data-cta="signup" class="text-sm px-4 py-2 rounded-xl bg-cyan-400 text-slate-900 font-semibold shadow-lg shadow-cyan-500/20 hover:bg-cyan-300 active:translate-y-px transition">Sign up</a>
+        <a href="#" aria-label="Sign up (TBD)" class="text-sm px-4 py-2 rounded-xl bg-cyan-400 text-slate-900 font-semibold shadow-lg shadow-cyan-500/20 hover:bg-cyan-300 active:translate-y-px transition">Sign up</a>
       </div>
     </div>
   </header>
@@ -71,8 +70,7 @@
             Simplefon.ai answers calls 24/7, qualifies leads, collects details, and sends them to you automatically. Start for just <span class="font-semibold text-white">$5</span>—no engineers, no contracts.
           </p>
           <div class="mt-8 flex flex-col sm:flex-row gap-3">
-            <!-- UPDATED: Hero CTA to signup.html -->
-            <a href="signup.html" data-cta="signup" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-cyan-400 text-slate-900 font-semibold hover:bg-cyan-300 active:translate-y-px shadow-lg shadow-cyan-500/20" aria-label="Sign up">Start free trial — $5</a>
+            <a href="#" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-cyan-400 text-slate-900 font-semibold hover:bg-cyan-300 active:translate-y-px shadow-lg shadow-cyan-500/20" aria-label="Sign up (TBD)">Start free trial — $5</a>
             <a href="#how" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl ring-1 ring-white/20 hover:ring-white/40">See how it works</a>
           </div>
           <div class="mt-6 flex items-center gap-4 text-xs text-slate-400">
@@ -205,8 +203,7 @@
             <li class="flex items-start gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" class="text-cyan-300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Simple dashboard (web + mobile)</li>
           </ul>
           <div class="mt-8 flex gap-3">
-            <!-- UPDATED: Pricing CTA to signup.html -->
-            <a href="signup.html" data-cta="signup" class="px-5 py-3 rounded-2xl bg-cyan-400 text-slate-900 font-semibold hover:bg-cyan-300 active:translate-y-px shadow-lg shadow-cyan-500/20" aria-label="Sign up">Get started — $5</a>
+            <a href="#" class="px-5 py-3 rounded-2xl bg-cyan-400 text-slate-900 font-semibold hover:bg-cyan-300 active:translate-y-px shadow-lg shadow-cyan-500/20" aria-label="Sign up (TBD)">Get started — $5</a>
             <a href="#" class="px-5 py-3 rounded-2xl ring-1 ring-white/20 hover:ring-white/40" aria-label="Log in (TBD)">Log in</a>
           </div>
         </div>
@@ -253,30 +250,6 @@
   <script>
     // Set current year in footer
     document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
-
-  <!-- NEW: Swap CTAs to Account when cookie from signup exists -->
-  <script>
-    (function(){
-      function getCookie(name){
-        return (document.cookie.split('; ').find(r => r.startsWith(name+'='))||'').split('=')[1]||'';
-      }
-      const phone = decodeURIComponent(getCookie('sf_phone')||'');
-      if (phone) {
-        // All sign-up CTAs -> account
-        document.querySelectorAll('a[data-cta="signup"]').forEach(a => {
-          a.href = 'account.html';
-          a.textContent = (a.textContent.match(/trial|started/i)) ? 'Go to account' : 'Account';
-          a.setAttribute('aria-label', 'Account');
-        });
-        // Any Log in link -> account
-        document.querySelectorAll('a[aria-label*="Log in"]').forEach(a => {
-          a.href = 'account.html';
-          a.textContent = 'Account';
-          a.setAttribute('aria-label', 'Account');
-        });
-      }
-    })();
   </script>
 
   <!-- Optional: load your app bundle. If present, it can hydrate or replace the content. -->

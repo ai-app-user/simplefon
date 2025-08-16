@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign up – simplefon.ai</title>
+  <meta name="description" content="Create your Simplefon account, verify your phone, pick an area code, describe your business, and start for $5 (test mode: $0.01)." />
+  <meta name="theme-color" content="#06b6d4" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { slate: tailwind.colors.slate, cyan: tailwind.colors.cyan, emerald: tailwind.colors.emerald, rose: tailwind.colors.rose } } } }
+  </script>
+  <style>html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}::selection{background:#22d3ee33}</style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+  <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 bg-slate-900/80 border-b border-white/10">
+    <div class="mx-auto max-w-3xl px-4 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2" aria-label="simplefon.ai home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" class="fill-cyan-400/20" /><path d="M7 9c0-1.1.9-2 2-2h2a2 2 0 012 2v1a2 2 0 01-2 2H9v2h4" class="stroke-cyan-300" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="font-semibold tracking-tight text-lg">simplefon<span class="text-cyan-400">.ai</span></span>
+      </a>
+      <div class="text-sm text-slate-400 hidden sm:block">Need help? <a class="text-cyan-300 hover:text-cyan-200" href="#">Contact</a></div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-3xl px-4">
+    <section class="pt-10 pb-20">
+      <div class="text-center">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Create your Simplefon account</h1>
+        <p class="mt-3 text-slate-300">We'll verify your phone, set up your number, and get you live. Start for $5 and get <span class="font-semibold text-white">20 minutes credit</span>. No contract — cancel anytime.</p>
+        <p class="mt-1 text-xs text-slate-400">Test mode enabled here: checkout charges <span class="font-semibold text-white">$0.01</span>.</p>
+      </div>
+
+      <!-- Progress -->
+      <ol class="mt-10 grid grid-cols-5 gap-2 text-[11px] text-center text-slate-300">
+        <li id="p1" class="rounded-lg px-2 py-2 bg-cyan-400/20 ring-1 ring-cyan-400/30">1. Verify phone</li>
+        <li id="p2" class="rounded-lg px-2 py-2 bg-white/5 ring-1 ring-white/10">2. Password</li>
+        <li id="p3" class="rounded-lg px-2 py-2 bg-white/5 ring-1 ring-white/10">3. Area code</li>
+        <li id="p4" class="rounded-lg px-2 py-2 bg-white/5 ring-1 ring-white/10">4. Business</li>
+        <li id="p5" class="rounded-lg px-2 py-2 bg-white/5 ring-1 ring-white/10">5. Payment</li>
+      </ol>
+
+      <!-- Card -->
+      <div class="mt-6 rounded-2xl border border-white/10 bg-slate-900/50 p-6" id="card">
+        <!-- Step 1: phone + OTP -->
+        <div data-step="1" class="step">
+          <label class="block text-sm font-medium">Your mobile phone</label>
+          <div class="mt-2 flex gap-2">
+            <input id="phone" type="tel" inputmode="tel" placeholder="e.g., +13105550123" class="w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+            <button id="sendCode" class="shrink-0 rounded-xl bg-cyan-400 text-slate-900 font-semibold px-4">Send code</button>
+          </div>
+          <p class="mt-2 text-xs text-slate-400">We'll text a 6 digit code to verify it's you. We'll save your phone in a cookie so you stay signed in for 30 days.</p>
+          <div id="devOtp" class="hidden mt-2 text-xs text-cyan-300"></div>
+
+          <div id="otpWrap" class="hidden mt-6">
+            <label class="block text-sm font-medium">Enter verification code</label>
+            <div class="mt-2 flex gap-2">
+              <input id="otp" maxlength="6" inputmode="numeric" placeholder="000000" class="w-40 rounded-xl bg-black/40 border border-white/10 px-4 py-3 tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+              <button id="verifyCode" class="shrink-0 rounded-xl bg-emerald-400 text-slate-900 font-semibold px-4">Verify</button>
+            </div>
+            <div id="otpMsg" class="mt-2 text-xs text-slate-400"></div>
+          </div>
+        </div>
+
+        <!-- Step 2: password (saved later in backend) -->
+        <div data-step="2" class="step hidden">
+          <label class="block text-sm font-medium">Create a password</label>
+          <input id="password" type="password" placeholder="Minimum 8 characters" class="mt-2 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+          <p class="mt-2 text-xs text-slate-400">We'll store this securely in our backend later. For now it's used to proceed.</p>
+          <div class="mt-6 flex justify-between">
+            <button class="btn-secondary" data-prev>Back</button>
+            <button class="btn-primary" data-next id="toAreaCode">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 3: area code -->
+        <div data-step="3" class="step hidden">
+          <label class="block text-sm font-medium">Pick your preferred area code</label>
+          <input id="areaCode" type="text" maxlength="3" inputmode="numeric" placeholder="e.g., 310" class="mt-2 w-40 rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+          <p class="mt-2 text-xs text-slate-400">We'll try to assign a number with this area code (or nearest available).</p>
+          <div class="mt-6 flex justify-between">
+            <button class="btn-secondary" data-prev>Back</button>
+            <button class="btn-primary" data-next id="toBusiness">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 4: business profile & capture prefs -->
+        <div data-step="4" class="step hidden">
+          <label class="block text-sm font-medium">Describe your business</label>
+          <textarea id="bizDesc" rows="4" placeholder="e.g., Mobile car service in Los Angeles. We handle oil changes, tire rotations, brake checks..." class="mt-2 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400"></textarea>
+          <fieldset class="mt-4">
+            <legend class="text-sm font-medium">What info should the assistant collect?</legend>
+            <div class="mt-2 grid sm:grid-cols-2 gap-2 text-sm">
+              <label class="flex items-center gap-2"><input type="checkbox" class="cbox" value="name" checked> Name</label>
+              <label class="flex items-center gap-2"><input type="checkbox" class="cbox" value="phone" checked> Caller phone</label>
+              <label class="flex items-center gap-2"><input type="checkbox" class="cbox" value="email"> Email</label>
+              <label class="flex items-center gap-2"><input type="checkbox" class="cbox" value="location"> Location / address</label>
+              <label class="flex items-center gap-2"><input type="checkbox" class="cbox" value="appt"> Appointment date/time</label>
+              <label class="flex items-center gap-2"><input type="checkbox" class="cbox" value="notes"> Notes / details</label>
+            </div>
+          </fieldset>
+          <label class="block text-sm font-medium mt-4">Anything specific to ask?</label>
+          <input id="customQs" placeholder="e.g., Vehicle make/model, preferred service window" class="mt-2 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+          <div class="mt-6 flex justify-between">
+            <button class="btn-secondary" data-prev>Back</button>
+            <button class="btn-primary" data-next id="toPayment">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 5: payment (test mode $0.01) -->
+        <div data-step="5" class="step hidden">
+          <h3 class="text-lg font-semibold">Start plan</h3>
+          <p class="mt-2 text-sm text-slate-300">We will charge <span class="font-semibold text-white">$5</span> now (test here: $0.01) and provide a phone number + <span class="font-semibold text-white">20 minutes credit</span>.
+            If you use more than 20 minutes, you will automatically switch to the <span class="font-semibold text-white">Standard Plan</span>: <span class="font-semibold text-white">$29.95/week</span> with <span class="font-semibold text-white">60 minutes included</span>. Extra minutes are <span class="font-semibold text-white">$0.50/min</span>. No contract — cancel anytime.</p>
+
+          <div class="mt-6 grid sm:grid-cols-3 gap-3">
+            <button id="payGoogle" class="w-full rounded-xl bg-white text-slate-900 font-semibold py-3 flex items-center justify-center gap-2"><span class="sr-only">Google Pay</span> Google Pay</button>
+            <button id="payApple" class="w-full rounded-xl bg-black text-white font-semibold py-3 flex items-center justify-center gap-2 border border-white/20"><span class="sr-only">Apple Pay</span> Apple Pay</button>
+            <button id="payPaypal" class="w-full rounded-xl bg-[#ffc439] text-black font-semibold py-3 flex items-center justify-center gap-2"><span class="sr-only">PayPal</span>PayPal</button>
+          </div>
+          <p class="mt-3 text-xs text-slate-400">Payments are in sandbox/test mode here.</p>
+
+          <div class="mt-6 flex justify-between">
+            <button class="btn-secondary" data-prev>Back</button>
+            <button id="fakeComplete" class="btn-primary">Complete sign up</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="mt-6 text-center text-xs text-slate-400">By continuing you agree to our <a href="#" class="text-cyan-300">Terms</a> and <a href="#" class="text-cyan-300">Privacy Policy</a>.</p>
+    </section>
+  </main>
+
+  <script>
+    // ---- Config
+    const TEST_MODE = true;                          // set false for real integrations
+    const CHARGE_CENTS = TEST_MODE ? 1 : 500;        // $0.01 in test, otherwise $5.00
+    const COOKIE_DAYS = 30;                          // stay logged in for a month
+
+    // ---- Helpers
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function setCookie(name, value, days) {
+      const d = new Date(); d.setTime(d.getTime() + (days*24*60*60*1000));
+      document.cookie = `${name}=${encodeURIComponent(value)}; expires=${d.toUTCString()}; path=/; SameSite=Lax; ${location.protocol==='https:'?'Secure':''}`;
+    }
+    function getCookie(name){
+      return (document.cookie.split('; ').find(r => r.startsWith(name+'='))||'').split('=')[1]||'';
+    }
+
+    function fmtPhone(v){
+      let s = v.replace(/[^\d+]/g,'');
+      if(!s.startsWith('+')) s = '+1' + s; // default to US if not provided
+      return s;
+    }
+
+    function goto(step){
+      $$(".step").forEach(el => el.classList.add('hidden'));
+      const curr = document.querySelector(`[data-step="${step}"]`);
+      if(curr) curr.classList.remove('hidden');
+      for (let i=1;i<=5;i++) {
+        const pill = document.getElementById('p'+i);
+        if (!pill) continue;
+        pill.className = 'rounded-lg px-2 py-2 ' + (i===step? 'bg-cyan-400/20 ring-1 ring-cyan-400/30' : 'bg-white/5 ring-1 ring-white/10');
+      }
+      sessionStorage.setItem('sf_step', step);
+    }
+
+    // ---- State
+    const state = {
+      phone: '',
+      otp: '',
+      otpSentAt: 0,
+      password: '',
+      areaCode: '',
+      bizDesc: '',
+      capture: [],
+      customQs: '',
+      payment: { provider: '', cents: CHARGE_CENTS, ok: false }
+    };
+
+    // Persist/restore minimal state between reloads
+    (function restore(){
+      try {
+        const s = JSON.parse(localStorage.getItem('sf_signup')||'{}');
+        Object.assign(state, s);
+        if (state.phone) $('#phone').value = state.phone;
+        if (state.areaCode) $('#areaCode').value = state.areaCode;
+        if (state.bizDesc) $('#bizDesc').value = state.bizDesc;
+        if (state.customQs) $('#customQs').value = state.customQs;
+        const step = Number(sessionStorage.getItem('sf_step')||1);
+        goto(step);
+      } catch {}
+    })();
+
+    function save(){ localStorage.setItem('sf_signup', JSON.stringify(state)); }
+
+    // ---- Step 1: phone + OTP (mock SMS in TEST_MODE)
+    $('#sendCode').addEventListener('click', () => {
+      const phone = fmtPhone($('#phone').value||'');
+      if (!/^\+\d{10,15}$/.test(phone)) { alert('Please enter a valid phone in E.164 format (e.g., +13105550123).'); return; }
+      state.phone = phone; save();
+      state.otp = String(Math.floor(100000 + Math.random()*900000));
+      state.otpSentAt = Date.now();
+      $('#otpWrap').classList.remove('hidden');
+      $('#otp').focus();
+      if (TEST_MODE) {
+        $('#devOtp').textContent = `TEST MODE: code sent to ${phone} is ${state.otp}`;
+        $('#devOtp').classList.remove('hidden');
+      } else {
+        // TODO: Integrate real SMS (Firebase Auth or Twilio) here
+      }
+    });
+
+    $('#verifyCode').addEventListener('click', () => {
+      const code = ($('#otp').value||'').trim();
+      if (!/^[0-9]{6}$/.test(code)) { $('#otpMsg').textContent = 'Enter the 6 digit code from SMS.'; return; }
+      const age = Date.now() - state.otpSentAt;
+      if (age > 10*60*1000) { $('#otpMsg').textContent = 'Code expired. Please resend.'; return; }
+      if (code !== state.otp) { $('#otpMsg').textContent = 'Incorrect code. Try again.'; return; }
+      $('#otpMsg').textContent = 'Verified ';
+      setCookie('sf_phone', state.phone, COOKIE_DAYS);
+      goto(2);
+    });
+
+    // ---- Step 2: password
+    $('#toAreaCode').addEventListener('click', () => {
+      const pwd = ($('#password').value||'').trim();
+      if (pwd.length < 8) { alert('Password must be at least 8 characters.'); return; }
+      state.password = pwd; save();
+      goto(3);
+    });
+
+    // ---- Step 3: area code
+    $('#toBusiness').addEventListener('click', () => {
+      const ac = ($('#areaCode').value||'').replace(/\D/g,'');
+      if (!/^\d{3}$/.test(ac)) { alert('Please enter a 3 digit area code.'); return; }
+      state.areaCode = ac; save();
+      goto(4);
+    });
+
+    // ---- Step 4: business + capture prefs
+    $('#toPayment').addEventListener('click', () => {
+      state.bizDesc = ($('#bizDesc').value||'').trim();
+      state.capture = $$('.cbox').filter(cb => cb.checked).map(cb => cb.value);
+      state.customQs = ($('#customQs').value||'').trim();
+      if (!state.bizDesc) { alert('Please add a short description of your business.'); return; }
+      save();
+      goto(5);
+    });
+
+    // Prev buttons
+    $$("[data-prev]").forEach(btn => btn.addEventListener('click', () => {
+      const step = Math.max(1, Number(sessionStorage.getItem('sf_step')||1) - 1);
+      goto(step);
+    }));
+
+    // ---- Step 5: payment (sandboxed / simulated)
+    function simulatePay(provider){
+      return new Promise((resolve) => {
+        setTimeout(() => resolve({ ok: true, id: provider+"_TEST_"+Math.random().toString(36).slice(2) }), 600);
+      });
+    }
+
+    $('#payGoogle').addEventListener('click', async () => {
+      state.payment.provider = 'google_pay'; save();
+      const res = await simulatePay('GPay');
+      if(res.ok){ state.payment.ok = true; alert('Google Pay (TEST) approved for $'+(CHARGE_CENTS/100).toFixed(2)); }
+    });
+    $('#payApple').addEventListener('click', async () => {
+      state.payment.provider = 'apple_pay'; save();
+      const res = await simulatePay('ApplePay');
+      if(res.ok){ state.payment.ok = true; alert('Apple Pay (TEST) approved for $'+(CHARGE_CENTS/100).toFixed(2)); }
+    });
+    $('#payPaypal').addEventListener('click', async () => {
+      state.payment.provider = 'paypal'; save();
+      const res = await simulatePay('PayPal');
+      if(res.ok){ state.payment.ok = true; alert('PayPal (TEST) approved for $'+(CHARGE_CENTS/100).toFixed(2)); }
+    });
+
+    $('#fakeComplete').addEventListener('click', () => {
+      if (!state.payment.ok) { alert('Please complete payment first.'); return; }
+      // In production, send all state to backend and provision number
+      console.log('Signup complete (TEST):', state);
+      // Redirect to account page placeholder
+      location.href = '/account.html';
+    });
+
+    // Auto-advance if cookie already exists (returning user)
+    const existing = decodeURIComponent(getCookie('sf_phone')||'');
+    if (existing) {
+      state.phone = existing; $('#phone').value = existing;
+      $('#devOtp').classList.add('hidden');
+      $('#otpWrap').classList.remove('hidden');
+      $('#otpMsg').textContent = 'Phone recognized from cookie. Enter code to confirm it\'s you.';
+    }
+
+    // ---- Small UI helpers
+    document.addEventListener('click', (e)=>{
+      if(e.target.matches('.btn-primary')) e.target.classList.add('active');
+    });
+  </script>
+
+  <style>
+    .btn-primary{ @apply rounded-xl bg-cyan-400 text-slate-900 font-semibold px-5 py-3 hover:bg-cyan-300 active:translate-y-px; }
+    .btn-secondary{ @apply rounded-xl ring-1 ring-white/20 px-5 py-3 hover:ring-white/40; }
+  </style>
+</body>
+</html>

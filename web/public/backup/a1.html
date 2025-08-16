@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Account – simplefon.ai</title>
+  <meta name="theme-color" content="#06b6d4" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { slate: tailwind.colors.slate, cyan: tailwind.colors.cyan, emerald: tailwind.colors.emerald, rose: tailwind.colors.rose } } } }
+  </script>
+  <style>html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}::selection{background:#22d3ee33}</style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+  <!-- Top bar -->
+  <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 bg-slate-900/80 border-b border-white/10">
+    <div class="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2" aria-label="simplefon.ai home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" class="fill-cyan-400/20" /><path d="M7 9c0-1.1.9-2 2-2h2a2 2 0 012 2v1a2 2 0 01-2 2H9v2h4" class="stroke-cyan-300" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="font-semibold tracking-tight text-lg">simplefon<span class="text-cyan-400">.ai</span></span>
+      </a>
+      <div class="flex items-center gap-3">
+        <a href="/" class="text-sm px-3 py-2 rounded-xl hover:text-cyan-300">Home</a>
+        <button id="signOut" class="text-sm px-4 py-2 rounded-xl ring-1 ring-white/20 hover:ring-white/40">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4">
+    <section class="pt-8 pb-24">
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Your Account</h1>
+      <p class="mt-2 text-slate-300">Manage your login phone, agents, plan, and business info. Changes are saved locally here with a placeholder “save to backend” function you can wire to Firebase/your API.</p>
+
+      <!-- Grid: Account settings + Agents -->
+      <div class="mt-8 grid lg:grid-cols-3 gap-6">
+        <!-- Account settings -->
+        <section class="lg:col-span-1 rounded-2xl border border-white/10 bg-slate-900/60 p-6">
+          <h2 class="text-lg font-semibold">Main account settings</h2>
+          <p class="mt-1 text-xs text-slate-400">Used for login and password reset.</p>
+
+          <label class="block mt-4 text-sm font-medium">Login phone (verified)</label>
+          <input id="acctPhone" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" type="tel" disabled />
+
+          <label class="block mt-4 text-sm font-medium">Account name</label>
+          <input id="acctName" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="e.g., MainUser" />
+
+          <label class="block mt-4 text-sm font-medium">Contact email</label>
+          <input id="acctEmail" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="you@business.com" />
+
+          <div class="mt-6 flex items-center gap-3">
+            <button id="saveAccount" class="rounded-xl bg-cyan-400 text-slate-900 font-semibold px-5 py-3 hover:bg-cyan-300 active:translate-y-px">Save settings</button>
+            <span id="saveAccountMsg" class="text-xs text-slate-400"></span>
+          </div>
+        </section>
+
+        <!-- Agents -->
+        <section class="lg:col-span-2 rounded-2xl border border-white/10 bg-slate-900/60 p-6">
+          <div class="flex items-center justify-between gap-4">
+            <h2 class="text-lg font-semibold">Agents</h2>
+            <button id="addAgent" class="rounded-xl bg-cyan-400 text-slate-900 font-semibold px-4 py-2 hover:bg-cyan-300 active:translate-y-px">Add agent</button>
+          </div>
+          <p class="mt-1 text-xs text-slate-400">The first agent is prefilled from your signup choices. You can add more agents for different lines or locations.</p>
+
+          <div id="agentsList" class="mt-4 space-y-4"></div>
+
+          <div class="mt-6 flex items-center gap-3">
+            <button id="saveAgents" class="rounded-xl ring-1 ring-white/20 px-5 py-3 hover:ring-white/40">Save all</button>
+            <span id="saveAgentsMsg" class="text-xs text-slate-400"></span>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- Templates -->
+  <template id="agentTmpl">
+    <div class="agent-card rounded-2xl border border-white/10 bg-slate-900 p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="text-sm text-slate-300"><span class="font-semibold">Agent:</span> <span data-name>Untitled</span></div>
+        <div class="flex items-center gap-2">
+          <button data-duplicate class="text-xs rounded-lg ring-1 ring-white/20 px-3 py-1 hover:ring-white/40">Duplicate</button>
+          <button data-delete class="text-xs rounded-lg bg-rose-500/90 px-3 py-1 hover:bg-rose-400">Delete</button>
+        </div>
+      </div>
+      <div class="mt-4 grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium">Agent name</label>
+          <input data-field="name" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="e.g., Main Line" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Phone area code</label>
+          <input data-field="areaCode" maxlength="3" inputmode="numeric" class="mt-1 w-40 rounded-xl bg-black/40 border border-white/10 px-4 py-3 tracking-widest text-center" placeholder="310" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Payment plan</label>
+          <div class="mt-2 flex gap-3 text-sm">
+            <label class="flex items-center gap-2"><input type="radio" name="plan-__ID__" value="intro" data-field="plan"> Intro ($5)</label>
+            <label class="flex items-center gap-2"><input type="radio" name="plan-__ID__" value="standard" data-field="plan"> Standard ($29.95/week)</label>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Payment method</label>
+          <select data-field="paymentMethod" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3">
+            <option value="">Select...</option>
+            <option value="google_pay">Google Pay</option>
+            <option value="apple_pay">Apple Pay</option>
+            <option value="paypal">PayPal</option>
+            <option value="card">Card on file</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium">About the business</label>
+          <textarea data-field="about" rows="3" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="Short description of what this agent will handle"></textarea>
+          <p class="mt-1 text-xs text-slate-400">Tip: include what details the assistant should collect (e.g., name, phone, email, appointment time).</p>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+        <span>Minutes: <span data-minutes>—</span></span>
+        <span>Number: <span data-number>Pending assignment</span></span>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // ---- Utilities
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    function getCookie(name){ return (document.cookie.split('; ').find(r => r.startsWith(name+'='))||'').split('=')[1]||''; }
+    function uid(){ return (Date.now().toString(36)+Math.random().toString(36).slice(2,8)); }
+
+    // ---- Auth gate: require cookie set at signup
+    const acctPhone = decodeURIComponent(getCookie('sf_phone')||'');
+    if (!acctPhone) {
+      // Not logged in -> go to signup
+      location.replace('signup.html?next=account');
+    }
+
+    // ---- State
+    const account = JSON.parse(localStorage.getItem('sf_account')||'{}');
+    const agents = JSON.parse(localStorage.getItem('sf_agents')||'[]');
+    const signup = JSON.parse(localStorage.getItem('sf_signup')||'{}');
+
+    // Prefill account phone
+    $('#acctPhone').value = acctPhone || '';
+
+    // Bootstrap first agent from signup if none exists
+    if (agents.length === 0) {
+      const first = {
+        id: uid(),
+        name: 'Main Line',
+        areaCode: signup.areaCode || '',
+        plan: (signup.payment && signup.payment.ok) ? 'intro' : 'intro', // start on Intro
+        paymentMethod: (signup.payment && signup.payment.provider) || '',
+        about: signup.bizDesc || '',
+        minutes: 20, // starting credit
+        number: ''   // to be provisioned by backend post-payment
+      };
+      agents.push(first);
+      localStorage.setItem('sf_agents', JSON.stringify(agents));
+    }
+
+    // Restore account fields
+    $('#acctName').value = account.name || '';
+    $('#acctEmail').value = account.email || '';
+
+    // Render agents
+    const list = $('#agentsList');
+    function renderAgents(){
+      list.innerHTML = '';
+      agents.forEach((ag, idx) => {
+        const node = document.importNode($('#agentTmpl').content, true);
+        const card = node.querySelector('.agent-card');
+        card.dataset.id = ag.id;
+        card.querySelector('[data-name]').textContent = ag.name || `Agent ${idx+1}`;
+        const name = card.querySelector('[data-field="name"]');
+        const area = card.querySelector('[data-field="areaCode"]');
+        const about = card.querySelector('[data-field="about"]');
+        const pm = card.querySelector('[data-field="paymentMethod"]');
+        const minutes = card.querySelector('[data-minutes]');
+        const number = card.querySelector('[data-number]');
+        const pIntro = card.querySelector('input[value="intro"][data-field="plan"]');
+        const pStd   = card.querySelector('input[value="standard"][data-field="plan"]');
+        const planName = `plan-${ag.id}`;
+        pIntro.name = planName; pStd.name = planName;
+
+        name.value = ag.name || '';
+        area.value = ag.areaCode || '';
+        about.value = ag.about || '';
+        pm.value = ag.paymentMethod || '';
+        pIntro.checked = (ag.plan === 'intro');
+        pStd.checked = (ag.plan === 'standard');
+        minutes.textContent = (ag.minutes ?? '—');
+        number.textContent = ag.number ? ag.number : 'Pending assignment';
+
+        // Wire inputs
+        name.addEventListener('input', (e)=>{ ag.name = e.target.value; card.querySelector('[data-name]').textContent = ag.name || `Agent ${idx+1}`; autosave(); });
+        area.addEventListener('input', (e)=>{ ag.areaCode = e.target.value.replace(/\D/g,'').slice(0,3); e.target.value = ag.areaCode; autosave(); });
+        about.addEventListener('input', (e)=>{ ag.about = e.target.value; autosave(); });
+        pm.addEventListener('change', (e)=>{ ag.paymentMethod = e.target.value; autosave(); });
+        pIntro.addEventListener('change', (e)=>{ if(e.target.checked) { ag.plan='intro'; autosave(); } });
+        pStd.addEventListener('change', (e)=>{ if(e.target.checked) { ag.plan='standard'; autosave(); } });
+
+        // Actions
+        card.querySelector('[data-delete]').addEventListener('click', () => {
+          if (!confirm('Delete this agent?')) return;
+          const i = agents.findIndex(x=>x.id===ag.id);
+          if (i>=0) { agents.splice(i,1); saveAgents(); renderAgents(); }
+        });
+        card.querySelector('[data-duplicate]').addEventListener('click', () => {
+          const copy = { ...ag, id: uid(), name: (ag.name||'Agent')+' (copy)' };
+          agents.push(copy); saveAgents(); renderAgents();
+        });
+
+        list.appendChild(node);
+      });
+    }
+
+    renderAgents();
+
+    // Add agent
+    $('#addAgent').addEventListener('click', () => {
+      const newAg = { id: uid(), name: 'New Agent', areaCode: '', plan: 'standard', paymentMethod: '', about: '', minutes: 0, number: '' };
+      agents.push(newAg); saveAgents(); renderAgents();
+    });
+
+    // Save account
+    $('#saveAccount').addEventListener('click', async () => {
+      account.name = $('#acctName').value.trim();
+      account.email = $('#acctEmail').value.trim();
+      account.phone = acctPhone;
+      localStorage.setItem('sf_account', JSON.stringify(account));
+      await saveToBackend({ account, agents });
+      tick('#saveAccountMsg');
+    });
+
+    // Save agents
+    function saveAgents(){ localStorage.setItem('sf_agents', JSON.stringify(agents)); }
+    $('#saveAgents').addEventListener('click', async () => {
+      saveAgents();
+      await saveToBackend({ account, agents });
+      tick('#saveAgentsMsg');
+    });
+    function autosave(){ saveAgents(); }
+
+    // Fake backend saver – replace with Firebase/your API
+    async function saveToBackend(payload){
+      // TODO: integrate Firestore writes here (users/{phone}/agents) or your REST API
+      console.log('SAVE -> backend payload', payload);
+      return new Promise(r=>setTimeout(r, 300));
+    }
+
+    // Small UI toast
+    function tick(sel){ const el=$(sel); el.textContent='Saved'; setTimeout(()=>el.textContent='', 1500); }
+
+    // Sign out clears cookie and redirects
+    $('#signOut').addEventListener('click', () => {
+      document.cookie = `sf_phone=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+      location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

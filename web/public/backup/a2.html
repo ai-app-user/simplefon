@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Account – simplefon.ai</title>
+  <meta name="theme-color" content="#06b6d4" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { slate: tailwind.colors.slate, cyan: tailwind.colors.cyan, emerald: tailwind.colors.emerald, rose: tailwind.colors.rose } } } }
+  </script>
+  <style>html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}::selection{background:#22d3ee33}</style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+  <!-- Top bar -->
+  <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 bg-slate-900/80 border-b border-white/10">
+    <div class="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2" aria-label="simplefon.ai home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" class="fill-cyan-400/20" /><path d="M7 9c0-1.1.9-2 2-2h2a2 2 0 012 2v1a2 2 0 01-2 2H9v2h4" class="stroke-cyan-300" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="font-semibold tracking-tight text-lg">simplefon<span class="text-cyan-400">.ai</span></span>
+      </a>
+      <div class="flex items-center gap-3">
+        <a href="/" class="text-sm px-3 py-2 rounded-xl hover:text-cyan-300">Home</a>
+        <button id="signOut" class="text-sm px-4 py-2 rounded-xl ring-1 ring-white/20 hover:ring-white/40">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4">
+    <section class="pt-8 pb-24">
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Your Account</h1>
+      <p class="mt-2 text-slate-300">Only one section is open at a time. By default the first agent is open; tap headers to switch.</p>
+
+      <div class="mt-6 space-y-4" id="accordionRoot">
+        <!-- Accordion: Account Settings (collapsed by default) -->
+        <div class="rounded-2xl border border-white/10 bg-slate-900/60">
+          <button class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5" data-acc-trigger data-target="acc-settings" aria-expanded="false">
+            <span class="font-semibold">Main account settings</span>
+            <span class="text-slate-400 text-sm" id="acctSummary"></span>
+          </button>
+          <div id="acc-settings" class="acc-panel px-4 pb-4 hidden">
+            <p class="mt-2 text-xs text-slate-400">Used for login and password reset.</p>
+
+            <label class="block mt-4 text-sm font-medium">Login phone (verified)</label>
+            <input id="acctPhone" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" type="tel" disabled />
+
+            <label class="block mt-4 text-sm font-medium">Account name</label>
+            <input id="acctName" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="e.g., MainUser" />
+
+            <label class="block mt-4 text-sm font-medium">Contact email</label>
+            <input id="acctEmail" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="you@business.com" />
+
+            <div class="mt-6 flex items-center gap-3">
+              <button id="saveAccount" class="rounded-xl bg-cyan-400 text-slate-900 font-semibold px-5 py-3 hover:bg-cyan-300 active:translate-y-px">Save settings</button>
+              <span id="saveAccountMsg" class="text-xs text-slate-400"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agents list + Add -->
+        <div class="rounded-2xl border border-white/10 bg-slate-900/60">
+          <div class="flex items-center justify-between px-4 py-3">
+            <h2 class="font-semibold">Agents</h2>
+            <button id="addAgent" class="rounded-xl bg-cyan-400 text-slate-900 font-semibold px-4 py-2 hover:bg-cyan-300 active:translate-y-px">Add agent</button>
+          </div>
+          <div id="agentsList" class="pb-4 space-y-3"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Agent template: accordion item -->
+  <template id="agentTmpl">
+    <div class="rounded-xl border border-white/10 bg-slate-900 overflow-hidden">
+      <!-- Trigger row -->
+      <div class="flex items-center justify-between gap-2">
+        <button class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5" data-acc-trigger>
+          <div class="flex flex-col">
+            <span class="font-semibold" data-title>Agent</span>
+            <span class="text-xs text-slate-400" data-subtitle>—</span>
+          </div>
+          <span class="text-xs rounded-full px-2 py-1 bg-white/10 text-slate-300" data-status>active</span>
+        </button>
+        <div class="pr-3 flex items-center gap-2">
+          <button data-duplicate class="text-xs rounded-lg ring-1 ring-white/20 px-3 py-1 hover:ring-white/40">Duplicate</button>
+          <button data-delete class="text-xs rounded-lg bg-rose-500/90 px-3 py-1 hover:bg-rose-400">Delete</button>
+        </div>
+      </div>
+      <!-- Panel -->
+      <div class="acc-panel px-4 pb-4 hidden">
+        <div class="mt-2 grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium">Agent name</label>
+            <input data-field="name" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="e.g., Main Line" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Phone area code</label>
+            <input data-field="areaCode" maxlength="3" inputmode="numeric" class="mt-1 w-40 rounded-xl bg-black/40 border border-white/10 px-4 py-3 tracking-widest text-center" placeholder="310" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Payment plan</label>
+            <div class="mt-2 flex gap-3 text-sm">
+              <label class="flex items-center gap-2"><input type="radio" data-field="plan" value="intro"> Intro ($5)</label>
+              <label class="flex items-center gap-2"><input type="radio" data-field="plan" value="standard"> Standard ($29.95/week)</label>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Payment method</label>
+            <select data-field="paymentMethod" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3">
+              <option value="">Select...</option>
+              <option value="google_pay">Google Pay</option>
+              <option value="apple_pay">Apple Pay</option>
+              <option value="paypal">PayPal</option>
+              <option value="card">Card on file</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium">About the business</label>
+            <textarea data-field="about" rows="3" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="Short description of what this agent will handle"></textarea>
+          </div>
+        </div>
+
+        <div class="mt-4 grid sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium">Phone number (assigned)</label>
+            <input data-field="phoneNumber" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="TBD by backend" readonly />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Remaining minutes</label>
+            <input data-field="remainingMinutes" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="—" readonly />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Next billing cycle</label>
+            <input data-field="nextBilling" class="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3" placeholder="TBD (e.g., 2025-08-22)" readonly />
+          </div>
+        </div>
+
+        <div class="mt-5 flex flex-wrap items-center gap-3">
+          <button data-save class="rounded-xl ring-1 ring-white/20 px-5 py-3 hover:ring-white/40">Save</button>
+          <button data-activate class="hidden rounded-xl bg-emerald-400 text-slate-900 font-semibold px-5 py-3 hover:bg-emerald-300">Activate</button>
+          <button data-cancel class="hidden rounded-xl bg-rose-500/90 px-5 py-3 hover:bg-rose-400">Cancel</button>
+          <span data-msg class="text-xs text-slate-400"></span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // ---- Utilities
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    function getCookie(name){ return (document.cookie.split('; ').find(r => r.startsWith(name+'='))||'').split('=')[1]||''; }
+    function uid(){ return (Date.now().toString(36)+Math.random().toString(36).slice(2,8)); }
+
+    // ---- Auth gate
+    const acctPhoneCookie = decodeURIComponent(getCookie('sf_phone')||'');
+    if (!acctPhoneCookie) location.replace('signup.html?next=account');
+
+    // ---- State
+    const account = JSON.parse(localStorage.getItem('sf_account')||'{}');
+    const signup  = JSON.parse(localStorage.getItem('sf_signup')||'{}');
+    let agents    = JSON.parse(localStorage.getItem('sf_agents')||'[]');
+
+    // Prefill account
+    $('#acctPhone').value = acctPhoneCookie;
+    $('#acctName').value  = account.name || '';
+    $('#acctEmail').value = account.email || '';
+    $('#acctSummary').textContent = account.name ? `${account.name} • ${acctPhoneCookie}` : acctPhoneCookie;
+
+    // Bootstrap first agent from signup if none exists
+    if (agents.length === 0) {
+      agents.push({
+        id: uid(),
+        status: 'active', // active | draft
+        name: 'Main Line',
+        areaCode: signup.areaCode || '',
+        plan: 'intro',
+        paymentMethod: (signup.payment && signup.payment.provider) || '',
+        about: signup.bizDesc || '',
+        phoneNumber: '',            // assigned by backend
+        remainingMinutes: 20,       // initial credit
+        nextBilling: ''             // set by backend
+      });
+      persistAgents();
+    }
+
+    // ---- Accordion logic (only one open at a time)
+    function closeAllPanels(){ $$('.acc-panel').forEach(p => p.classList.add('hidden')); $$('[data-acc-trigger]').forEach(t => t.setAttribute('aria-expanded','false')); }
+    function openPanel(panel){
+      if (!panel) return;
+      closeAllPanels();
+      panel.classList.remove('hidden');
+      const btn = panel.previousElementSibling?.querySelector('[data-acc-trigger]') || panel.parentElement.querySelector('[data-acc-trigger]');
+      if (btn) btn.setAttribute('aria-expanded','true');
+      // Scroll into view on mobile
+      panel.parentElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+
+    // Wire Account Settings trigger
+    $$('[data-acc-trigger][data-target]').forEach(btn => {
+      btn.addEventListener('click', () => openPanel(document.getElementById(btn.dataset.target)));
+    });
+
+    // ---- Render agents
+    const list = $('#agentsList');
+    function hasDraft(){ return agents.some(a => a.status === 'draft'); }
+
+    function renderAgents(){
+      list.innerHTML = '';
+      const draftExists = hasDraft();
+      const addBtn = $('#addAgent');
+      addBtn.disabled = draftExists; addBtn.classList.toggle('opacity-50', draftExists);
+      addBtn.title = draftExists ? 'Finish activating the current new agent before adding another.' : '';
+
+      agents.forEach((ag, idx) => {
+        const frag = document.importNode($('#agentTmpl').content, true);
+        const root = frag.firstElementChild;
+        const trigger = root.querySelector('[data-acc-trigger]');
+        const panel = root.querySelector('.acc-panel');
+        const title = root.querySelector('[data-title]');
+        const subtitle = root.querySelector('[data-subtitle]');
+        const statusBadge = root.querySelector('[data-status]');
+
+        const dupBtn = root.querySelector('[data-duplicate]');
+        const delBtn = root.querySelector('[data-delete]');
+        const saveBtn = panel.querySelector('[data-save]');
+        const actBtn = panel.querySelector('[data-activate]');
+        const cancelBtn = panel.querySelector('[data-cancel]');
+        const msgEl = panel.querySelector('[data-msg]');
+
+        // Inputs
+        const name = panel.querySelector('[data-field="name"]');
+        const area = panel.querySelector('[data-field="areaCode"]');
+        const planRadios = panel.querySelectorAll('input[data-field="plan"]');
+        const pm = panel.querySelector('[data-field="paymentMethod"]');
+        const about = panel.querySelector('[data-field="about"]');
+        const ph = panel.querySelector('[data-field="phoneNumber"]');
+        const mins = panel.querySelector('[data-field="remainingMinutes"]');
+        const next = panel.querySelector('[data-field="nextBilling"]');
+
+        // Bind values
+        title.textContent = ag.name || `Agent ${idx+1}`;
+        subtitle.textContent = `${ag.plan==='intro'?'Intro':'Standard'} • ${ag.phoneNumber||'No number yet'} • ${(ag.remainingMinutes??'—')} min`;
+        statusBadge.textContent = ag.status || 'active';
+
+        name.value = ag.name || '';
+        area.value = ag.areaCode || '';
+        pm.value = ag.paymentMethod || '';
+        about.value = ag.about || '';
+        ph.value = ag.phoneNumber || '';
+        mins.value = (ag.remainingMinutes ?? '').toString();
+        next.value = ag.nextBilling || '';
+        planRadios.forEach(r => r.checked = (r.value === ag.plan));
+
+        // Trigger opens this panel
+        trigger.addEventListener('click', () => openPanel(panel));
+
+        // Disable duplicate if any draft exists or this is draft
+        if (draftExists || ag.status === 'draft') { dupBtn.disabled = true; dupBtn.classList.add('opacity-50'); dupBtn.title = 'Duplicate disabled until new agent is activated.'; }
+
+        // Draft controls
+        if (ag.status === 'draft') {
+          actBtn.classList.remove('hidden');
+          cancelBtn.classList.remove('hidden');
+          statusBadge.textContent = 'draft';
+        }
+
+        // Listeners
+        name.addEventListener('input', e=>{ ag.name=e.target.value; title.textContent = ag.name || `Agent ${idx+1}`; persistAgents(); });
+        area.addEventListener('input', e=>{ ag.areaCode=e.target.value.replace(/\D/g,'').slice(0,3); e.target.value=ag.areaCode; persistAgents(); });
+        planRadios.forEach(r=>r.addEventListener('change', ev=>{ if(ev.target.checked){ ag.plan=ev.target.value; subtitle.textContent = `${ag.plan==='intro'?'Intro':'Standard'} • ${ag.phoneNumber||'No number yet'} • ${(ag.remainingMinutes??'—')} min`; persistAgents(); }}));
+        pm.addEventListener('change', e=>{ ag.paymentMethod=e.target.value; persistAgents(); });
+        about.addEventListener('input', e=>{ ag.about=e.target.value; persistAgents(); });
+
+        // Save
+        saveBtn.addEventListener('click', async ()=>{ await saveToBackend({ account, agent: ag }); flash(msgEl,'Saved'); });
+
+        // Activate draft
+        actBtn.addEventListener('click', async ()=>{
+          ag.status='active';
+          await saveToBackend({ account, agent: ag, action:'activate' });
+          flash(msgEl,'Activated');
+          renderAgents();
+        });
+
+        // Cancel draft
+        cancelBtn.addEventListener('click', ()=>{ agents = agents.filter(a=>a!==ag); persistAgents(); renderAgents(); });
+
+        // Delete
+        delBtn.addEventListener('click', (e)=>{ if(!confirm('Delete this agent?')) return; agents = agents.filter(a=>a!==ag); persistAgents(); renderAgents(); e.stopPropagation(); });
+
+        // Duplicate
+        dupBtn.addEventListener('click', (e)=>{ if (hasDraft()) return; const copy = { ...ag, id: uid(), name: (ag.name||'Agent')+' (copy)', status:'active' }; agents.push(copy); persistAgents(); renderAgents(); e.stopPropagation(); });
+
+        list.appendChild(frag);
+      });
+
+      // By default open the first agent panel
+      const firstPanel = list.querySelector('.acc-panel');
+      if (firstPanel) openPanel(firstPanel);
+    }
+
+    function persistAgents(){ localStorage.setItem('sf_agents', JSON.stringify(agents)); }
+
+    // Add agent (only one draft at a time)
+    $('#addAgent').addEventListener('click', ()=>{
+      if (hasDraft()) return;
+      agents.push({ id: uid(), status:'draft', name:'New Agent', areaCode:'', plan:'standard', paymentMethod:'', about:'', phoneNumber:'', remainingMinutes:0, nextBilling:'' });
+      persistAgents();
+      renderAgents();
+      // Open the new draft panel automatically
+      const drafts = Array.from(document.querySelectorAll('#agentsList .acc-panel'));
+      const last = drafts[drafts.length-1];
+      if (last) openPanel(last);
+    });
+
+    // Save account
+    $('#saveAccount').addEventListener('click', async () => {
+      account.name = $('#acctName').value.trim();
+      account.email = $('#acctEmail').value.trim();
+      account.phone = acctPhoneCookie;
+      localStorage.setItem('sf_account', JSON.stringify(account));
+      await saveToBackend({ account, agents });
+      flash('#saveAccountMsg','Saved');
+      $('#acctSummary').textContent = account.name ? `${account.name} • ${acctPhoneCookie}` : acctPhoneCookie;
+    });
+
+    // Stub backend saver
+    async function saveToBackend(payload){
+      // TODO: integrate Firestore (users/{phone}/agents) or your REST API
+      console.log('SAVE -> backend payload', payload);
+      return new Promise(r=>setTimeout(r, 250));
+    }
+
+    function flash(selOrEl, text){ const el = typeof selOrEl==='string'? $(selOrEl): selOrEl; if(!el) return; el.textContent = text; setTimeout(()=>{ el.textContent=''; }, 1400); }
+
+    // Initial render
+    renderAgents();
+
+    // Sign out clears cookie and redirects
+    $('#signOut').addEventListener('click', () => {
+      document.cookie = `sf_phone=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+      location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
