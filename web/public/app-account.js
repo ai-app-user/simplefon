@@ -1,6 +1,5 @@
-// app-account.js — UI for Account page (Accordion + Firebase)
+// app-account.js — Account UI (Accordion + Firebase) — Option B: save only on explicit "Save"
 
-// Import the Firebase backend helpers:
 import {
   ensureUser,
   readAccount,
@@ -18,20 +17,19 @@ const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 const getCookie = (name) => (document.cookie.split('; ').find(r => r.startsWith(name+'='))||'').split('=')[1]||'';
 const decode = (v) => decodeURIComponent(v || '');
-const debounce = (fn, ms=300) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 
-// ---- Auth gate (we keep your cookie approach)
 const acctPhone = decode(getCookie('sf_phone'));
 if (!acctPhone) location.replace('signup.html?next=account');
 
-// ---- Small UI helpers
 function flash(el, text='Saved'){ if (!el) return; el.textContent = text; setTimeout(()=>el.textContent='', 1400); }
 function closeAllPanels(){ $$('.acc-panel').forEach(p=>p.classList.add('hidden')); $$('[data-acc-trigger]').forEach(t=>t.setAttribute('aria-expanded','false')); }
 function openPanel(panel){ if(!panel) return; closeAllPanels(); panel.classList.remove('hidden'); const btn = panel.previousElementSibling?.querySelector('[data-acc-trigger]')||panel.parentElement.querySelector('[data-acc-trigger]'); if(btn) btn.setAttribute('aria-expanded','true'); panel.parentElement.scrollIntoView({block:'start',behavior:'smooth'}); }
 
-// ---- Main
+// Track which agent should remain open between renders
+let lastOpenId = null;
+
 async function main(){
-  // Ensure user doc exists
+  // Ensure user doc
   await ensureUser(acctPhone, { phone: acctPhone });
 
   // Account fields
@@ -39,10 +37,8 @@ async function main(){
   const nameEl  = $('#acctName');
   const emailEl = $('#acctEmail');
   const acctSummary = $('#acctSummary');
-
   if (phoneEl) phoneEl.value = acctPhone;
 
-  // Load account from Firestore
   const acct = await readAccount(acctPhone);
   if (nameEl)  nameEl.value  = acct.name  || '';
   if (emailEl) emailEl.value = acct.email || '';
@@ -56,13 +52,12 @@ async function main(){
     plan: 'intro',
     paymentMethod: signup?.payment?.provider || '',
     about: signup.bizDesc || '',
-    // read-only fields, filled by backend later:
-    minutes: 20,  // starter credit (if you prefer: remainingMinutes: 20)
-    number: '',   // assigned later (if you prefer: phoneNumber: '')
+    minutes: 20,   // starter credit
+    number: '',    // assigned later
     status: 'active'
   });
 
-  // Save account -> Firestore
+  // Save account -> Firestore (explicit)
   const saveAccountBtn = $('#saveAccount');
   const saveAccountMsg = $('#saveAccountMsg');
   if (saveAccountBtn) saveAccountBtn.addEventListener('click', async ()=>{
@@ -76,21 +71,24 @@ async function main(){
     if (acctSummary) acctSummary.textContent = payload.name ? `${payload.name} • ${acctPhone}` : acctPhone;
   });
 
-  // Wire Account header trigger (accordion)
+  // Wire Account header (accordion)
   $$('[data-acc-trigger][data-target]').forEach(btn=>{
     btn.addEventListener('click', ()=> openPanel(document.getElementById(btn.dataset.target)));
   });
 
-  // Agents live list from Firestore
   const list  = $('#agentsList');
   const addBtn = $('#addAgent');
   const tmpl = $('#agentTmpl');
   if (!list || !tmpl) return console.error('Missing #agentsList or #agentTmpl in HTML');
 
   function render(agents){
+    // Remember currently open agent before teardown
+    const prevOpenTrigger = list.querySelector('[data-acc-trigger][aria-expanded="true"]');
+    const prevOpenItem = prevOpenTrigger && prevOpenTrigger.closest('[data-agent-id]');
+    const prevOpenId = prevOpenItem?.dataset.agentId || lastOpenId;
+
     list.innerHTML = '';
 
-    // Allow only one draft at a time
     const hasDraft = agents.some(a => a.status === 'draft');
     if (addBtn){
       addBtn.disabled = hasDraft;
@@ -101,6 +99,8 @@ async function main(){
     agents.forEach((ag, idx)=>{
       const frag = document.importNode(tmpl.content, true);
       const root   = frag.firstElementChild;
+      root.setAttribute('data-agent-id', ag.id);
+
       const trigger= root.querySelector('[data-acc-trigger]');
       const panel  = root.querySelector('.acc-panel');
       const title  = root.querySelector('[data-title]');
@@ -125,12 +125,12 @@ async function main(){
       const minsI = panel.querySelector('[data-field="remainingMinutes"]');
       const nextI = panel.querySelector('[data-field="nextBilling"]'); // optional for later
 
-      // Field name compatibility (UI may use phoneNumber/remainingMinutes; backend stores number/minutes)
+      // Field name compatibility
       const phoneNumber      = ag.phoneNumber ?? ag.number ?? '';
       const remainingMinutes = ag.remainingMinutes ?? ag.minutes ?? '';
       const nextBilling      = ag.nextBilling ?? '';
 
-      // Bind values
+      // Bind current values
       if (title) title.textContent = ag.name || `Agent ${idx+1}`;
       if (subtitle) subtitle.textContent = `${ag.plan==='intro'?'Intro':'Standard'} • ${phoneNumber || 'No number yet'} • ${remainingMinutes===''?'—':remainingMinutes} min`;
       if (statusBadge) statusBadge.textContent = ag.status || 'active';
@@ -144,46 +144,110 @@ async function main(){
       if (nextI)  nextI.value  = nextBilling;
       planRadios.forEach(r=> r.checked = (r.value === ag.plan));
 
-      // Accordion open
-      if (trigger) trigger.addEventListener('click', ()=> openPanel(panel));
-
-      // Disable duplicate if any draft exists or this one is a draft
-      const draftExists = agents.some(a => a.status === 'draft');
-      if (draftExists || ag.status === 'draft'){
-        if (dupBtn) { dupBtn.disabled = true; dupBtn.classList.add('opacity-50'); dupBtn.title = 'Duplicate disabled until new agent is activated.'; }
+      // Accordion open + remember open id
+      if (trigger) {
+        trigger.addEventListener('click', ()=>{
+          lastOpenId = ag.id;
+          openPanel(panel);
+        });
       }
-      if (ag.status === 'draft'){ if (actBtn) actBtn.classList.remove('hidden'); if (cancelBtn) cancelBtn.classList.remove('hidden'); if (statusBadge) statusBadge.textContent = 'draft'; }
 
-      // Debounced updates to Firestore
-      const debName  = debounce(v => updateAgent(acctPhone, ag.id, { name: v }));
-      if (nameI) nameI.addEventListener('input', e => { const v = e.target.value; if (title) title.textContent = v || `Agent ${idx+1}`; debName(v); });
-      if (areaI) areaI.addEventListener('input', e => { const v = e.target.value.replace(/\D/g,'').slice(0,3); e.target.value=v; updateAgent(acctPhone, ag.id, { areaCode: v }); });
-      const debAbout = debounce(v => updateAgent(acctPhone, ag.id, { about: v }));
-      if (aboutT) aboutT.addEventListener('input', e => debAbout(e.target.value));
-      if (pmSel) pmSel.addEventListener('change', e => updateAgent(acctPhone, ag.id, { paymentMethod: e.target.value }));
-      planRadios.forEach(r => r.addEventListener('change', ev => { if (ev.target.checked) updateAgent(acctPhone, ag.id, { plan: ev.target.value }); }));
+      // Update UI text live (NO backend writes)
+      if (nameI) nameI.addEventListener('input', e => {
+        const v = e.target.value;
+        if (title) title.textContent = v || `Agent ${idx+1}`;
+      });
+      if (areaI) areaI.addEventListener('input', e => {
+        const v = e.target.value.replace(/\D/g,'').slice(0,3);
+        e.target.value = v;
+      });
+      if (pmSel) pmSel.addEventListener('change', () => {});
+      if (aboutT) aboutT.addEventListener('input', () => {});
+      planRadios.forEach(r => r.addEventListener('change', ev => {
+        if (ev.target.checked && subtitle) {
+          const planTxt = ev.target.value === 'intro' ? 'Intro' : 'Standard';
+          subtitle.textContent = `${planTxt} • ${phoneNumber || 'No number yet'} • ${remainingMinutes===''?'—':remainingMinutes} min`;
+        }
+      }));
 
-      if (saveBtn)  saveBtn.addEventListener('click', async ()=>{ await updateAgent(acctPhone, ag.id, {}); flash(msgEl); });
-      if (actBtn)   actBtn.addEventListener('click',  async ()=>{ await updateAgent(acctPhone, ag.id, { status:'active' }); flash(msgEl,'Activated'); });
-      if (cancelBtn)cancelBtn.addEventListener('click',async ()=>{ await deleteAgent(acctPhone, ag.id); });
+      // Save button — single write to Firestore
+      if (saveBtn) saveBtn.addEventListener('click', async ()=>{
+        const selectedPlan = panel.querySelector('input[data-field="plan"]:checked')?.value || ag.plan;
+        const patch = {
+          name: (nameI?.value || '').trim(),
+          areaCode: (areaI?.value || '').replace(/\D/g,'').slice(0,3),
+          paymentMethod: pmSel?.value || '',
+          about: (aboutT?.value || '').trim(),
+          plan: selectedPlan,
+        };
+        await updateAgent(acctPhone, ag.id, patch);
+        lastOpenId = ag.id; // keep this panel open after snapshot re-render
+        flash(msgEl, 'Saved');
+      });
 
-      if (delBtn) delBtn.addEventListener('click', async (e)=>{ e.stopPropagation(); if (!confirm('Delete this agent?')) return; await deleteAgent(acctPhone, ag.id); });
-      if (dupBtn) dupBtn.addEventListener('click', async (e)=>{ e.stopPropagation(); if (agents.some(a=>a.status==='draft')) return; await duplicateAgent(acctPhone, ag.id); });
+      // Activate draft (still immediate write)
+      if (ag.status === 'draft'){
+        if (actBtn) actBtn.classList.remove('hidden');
+        if (cancelBtn) cancelBtn.classList.remove('hidden');
+        if (statusBadge) statusBadge.textContent = 'draft';
+      }
+      if (actBtn) actBtn.addEventListener('click', async ()=>{
+        await updateAgent(acctPhone, ag.id, { status: 'active' });
+        lastOpenId = ag.id;
+        flash(msgEl, 'Activated');
+      });
+
+      // Cancel draft (delete)
+      if (cancelBtn) cancelBtn.addEventListener('click', async ()=>{
+        await deleteAgent(acctPhone, ag.id);
+      });
+
+      // Delete
+      if (delBtn) delBtn.addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        if (!confirm('Delete this agent?')) return;
+        await deleteAgent(acctPhone, ag.id);
+      });
+
+      // Duplicate
+      if (dupBtn) {
+        const draftExists = agents.some(a => a.status === 'draft');
+        if (draftExists || ag.status === 'draft') {
+          dupBtn.disabled = true;
+          dupBtn.classList.add('opacity-50');
+          dupBtn.title = 'Duplicate disabled until new agent is activated.';
+        }
+        dupBtn.addEventListener('click', async (e)=>{
+          e.stopPropagation();
+          if (agents.some(a=>a.status==='draft')) return;
+          const newId = await duplicateAgent(acctPhone, ag.id);
+          lastOpenId = newId || ag.id;
+        });
+      }
 
       list.appendChild(frag);
     });
 
-    // Open the first agent panel by default
-    const firstPanel = list.querySelector('.acc-panel');
-    if (firstPanel) openPanel(firstPanel);
+    // Re-open previously open panel (or fallback to first if none)
+    let targetPanel = null;
+    if (prevOpenId) targetPanel = list.querySelector(`[data-agent-id="${prevOpenId}"] .acc-panel`);
+    if (targetPanel) openPanel(targetPanel);
+    else {
+      const firstPanel = list.querySelector('.acc-panel');
+      if (firstPanel) openPanel(firstPanel);
+    }
   }
 
-  // Subscribe live to Firestore agents
+  // Live subscription; renders happen on:
+  // - explicit Save (our update triggers snapshot),
+  // - Activate/Cancel/Duplicate/Delete,
+  // - external changes (other clients/servers).
   subscribeAgents(acctPhone, render);
 
-  // Add new agent (restrict to one draft)
+  // Add agent -> open new draft automatically
   if (addBtn) addBtn.addEventListener('click', async ()=>{
-    await addAgent(acctPhone, { status:'draft', name:'New Agent', plan:'standard', areaCode:'' });
+    const newId = await addAgent(acctPhone, { status:'draft', name:'New Agent', plan:'standard', areaCode:'' });
+    lastOpenId = newId || null;
   });
 
   // Sign out
